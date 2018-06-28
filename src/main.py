@@ -1,65 +1,68 @@
-from __future__ import print_function
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-from tensorflow import keras
-from tensorflow.python.keras.datasets import mnist
+from tensorflow.python.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.python.keras.models import Sequential
-from tensorflow.python.keras.layers import Dense, Dropout, Flatten
 from tensorflow.python.keras.layers import Conv2D, MaxPooling2D
+from tensorflow.python.keras.layers import Activation, Dropout, Flatten, Dense
 from tensorflow.python.keras import backend as K
 
-batch_size = 128
-num_classes = 10
-epochs = 5
 
-img_rows, img_cols = 28, 28
-(x_train, y_train) , (x_test, y_test) = mnist.load_data()
+# dimensions of our images.
+img_width, img_height = 299, 299
 
-if K.image_data_format() == 'channels_first':
-  x_train = x_train.reshape(x_train.shape[0], 1, img_rows, img_cols, 1)
-  x_test = x_test.reshape(x_test.shape[0], 1, img_rows, img_cols, 1)
-  input_shape = (1, img_rows, img_cols)
-else:
-  x_train = x_train.reshape(x_train.shape[0],img_rows, img_cols, 1)
-  x_test = x_test.reshape(x_test.shape[0],img_rows, img_cols, 1)
-  input_shape = (img_rows, img_cols,1)
-x_train = x_train.astype('float32')
-x_test = x_test.astype('float32')
-x_train /= 255
-x_test /= 255
-print('x_train shape:', x_train.shape)
-print(x_train.shape[0], 'train samples')
-print(x_test.shape[0], 'test samples')
+train_data_dir = 'downloads/train'
+test_data_dir = 'downloads/test'
+nb_train_samples = 800
+nb_test_samples = 200
+epochs = 16
+batch_size = 16
 
-y_train = keras.utils.to_categorical(y_train, num_classes)
-y_test = keras.utils.to_categorical(y_test, num_classes)
+input_shape = (img_width, img_height, 3)
 
 model = Sequential()
-#model.add(Conv2D(32, kernel_size=(3,3),
-#                activation='relu',
-#                input_shape=input_shape))
-#model.add(Conv2D(64,(3,3), activation='relu'))
-#model.add(MaxPooling2D(pool_size=(2,2)))
-model.add(Dropout(0.25))
-model.add(Flatten())
-model.add(Dense(128, activation='relu'))
-model.add(Dropout(0.5))
-model.add(Dense(num_classes,activation='softmax'))
-model.compile(loss=keras.losses.categorical_crossentropy,
-             optimizer=keras.optimizers.Adadelta(),
-             metrics=['accuracy'])
-model.fit(x_train, y_train,
-         batch_size=batch_size,
-         epochs=epochs,
-         verbose=1,
-         validation_data=(x_test, y_test))
+#model.add(Conv2D(32, (3, 3), input_shape=input_shape, activation = 'relu'))
+#model.add(MaxPooling2D(pool_size=(2, 2)))
 
-score = model.evaluate(x_test, y_test, verbose = 0)
-print('Test loss:', score[0])
-print('Test accuracy:', score[1])
+#model.add(Conv2D(32, (3, 3)))
+#model.add(Activation('relu'))
+#model.add(MaxPooling2D(pool_size=(2, 2)))
 
-#save structure and weights
-model_json = model.to_json()
-with open("model_json","w") as json_file:
-  json_file.write(model_json)
-  model.save_weights("model.h5")
+#model.add(Conv2D(64, (3, 3)))
+#model.add(Activation('relu'))
+#model.add(MaxPooling2D(pool_size=(2, 2)))
+
+model.add(Flatten( input_shape=input_shape))
+model.add(Dense(16, activation='relu'))
+#model.add(Dropout(0.5))
+model.add(Dense(6, activation = 'sigmoid'))
+
+model.compile(loss='categorical_crossentropy',
+              optimizer='rmsprop',
+              metrics=['accuracy'])
+
+
+train_datagen = ImageDataGenerator(
+    rescale=1. / 255,
+    shear_range=0.2,
+    zoom_range=0.2,
+    horizontal_flip=True)
+
+
+test_datagen = ImageDataGenerator(rescale=1. / 255)
+
+train_generator = train_datagen.flow_from_directory(
+    train_data_dir,
+    target_size=(img_width, img_height),
+    batch_size=batch_size,
+    class_mode='categorical')
+
+validation_generator = test_datagen.flow_from_directory(
+    test_data_dir,
+    target_size=(img_width, img_height),
+    batch_size=batch_size,
+    class_mode='categorical')
+
+model.fit_generator(
+    train_generator,
+    steps_per_epoch=nb_train_samples // batch_size ,
+    epochs=epochs)
