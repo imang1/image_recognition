@@ -2,11 +2,13 @@
 This is a collection of various models which attempts to train a neural network for image recognition.
 
 ### Prerequisites
-A folder of images downloaded into categories.\n
+A folder of images downloaded into categories.
+
 Docker or pyenv
 
 ## Install
-Install docker from docker website \n
+Install docker from docker website 
+
 Install pyenv following instructions from https://github.com/pyenv/pyenv-virtualenv
 
 ## How to run
