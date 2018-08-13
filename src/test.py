@@ -2,7 +2,7 @@ from tensorflow.python.keras import backend as K
 import tensorflow.contrib.keras as keras
 
 PWD   = '.'
-MODEL = "{}/product_photos_model.h5".format(PWD)
+MODEL = "{}/new_product_photos_model.h5".format(PWD)
 
 # Load model.
 model = keras.models.load_model(MODEL)
